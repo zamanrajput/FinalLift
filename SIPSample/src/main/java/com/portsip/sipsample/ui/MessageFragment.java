@@ -27,14 +27,14 @@ public class MessageFragment extends BaseFragment implements View.OnClickListene
     ListView lvContacts;
 
     MyApplication application;
-    MainActivity activity;
+    MainSIPActivity activity;
     private ContactAdapter mAdapter;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        activity = (MainActivity) getActivity();
+        activity = (MainSIPActivity) getActivity();
         application = (MyApplication) activity.getApplication();
 
         return inflater.inflate(R.layout.message, container, false);

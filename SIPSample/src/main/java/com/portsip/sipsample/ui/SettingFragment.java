@@ -1,6 +1,5 @@
 package com.portsip.sipsample.ui;
 
-import com.portsip.PortSipSdk;
 import com.portsip.R;
 import com.portsip.sipsample.service.PortSipService;
 
@@ -13,12 +12,12 @@ import android.view.View;
 
 public class SettingFragment extends PreferenceFragment {
 	MyApplication application;
-	MainActivity activity;
+	MainSIPActivity activity;
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		activity = (MainActivity) getActivity();
+		activity = (MainSIPActivity) getActivity();
 		application = (MyApplication)activity.getApplication();
 		addPreferencesFromResource(R.xml.setting);
 	}

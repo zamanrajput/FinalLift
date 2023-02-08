@@ -23,21 +23,39 @@ import android.widget.Toast;
 
 
 import com.portsip.R;
+import com.portsip.sipsample.modification.admin.PinAdminActivity;
+import com.portsip.sipsample.modification.src.HomeActivity;
+import com.portsip.sipsample.modification.src.SharedPreUtil;
+import com.portsip.sipsample.modification.src.models.AdminConfig;
 import com.portsip.sipsample.receiver.PortMessageReceiver;
 import com.portsip.sipsample.service.PortSipService;
 
 
-public class MainActivity extends Activity implements RadioGroup.OnCheckedChangeListener {
+public class MainSIPActivity extends Activity implements RadioGroup.OnCheckedChangeListener {
+
+
+    public static MainSIPActivity mActivitySip;
 
     public PortMessageReceiver receiver = null;
 
     private final int REQ_DANGERS_PERMISSION = 2;
+
+    public static AdminConfig adminConfig;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         receiver = new PortMessageReceiver();
         setContentView(R.layout.main);
+        SharedPreUtil s = new SharedPreUtil(this);
+        mActivitySip = this;
+        adminConfig = s.getConfig();
+        if (adminConfig == null) {
+            PinAdminActivity.start(MainSIPActivity.this);
+            finish();
+            return;
+        }
+
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(PortSipService.REGISTER_CHANGE_ACTION);
@@ -48,25 +66,34 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
         switchContent(R.id.login_fragment);
         RadioGroup menuGroup = findViewById(R.id.tab_menu);
         menuGroup.setOnCheckedChangeListener(this);
+
+
+        HomeActivity.start(this);
+
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        requestPermissions (this);
+        requestPermissions(this);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(receiver);
+        try {
+            unregisterReceiver(receiver);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     //if you want app always keep run in background ,you need call this function to request ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission.
-    public void startPowerSavePermissions(Activity activityContext){
+    public void startPowerSavePermissions(Activity activityContext) {
         String packageName = activityContext.getPackageName();
         PowerManager pm = (PowerManager) activityContext.getSystemService(Context.POWER_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&!pm.isIgnoringBatteryOptimizations(packageName)){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !pm.isIgnoringBatteryOptimizations(packageName)) {
 
             Intent intent = new Intent();
             intent.setAction(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
@@ -81,18 +108,19 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
             case REQ_DANGERS_PERMISSION:
-                int i=0;
-                for(int result:grantResults) {
+                int i = 0;
+                for (int result : grantResults) {
                     if (result != PackageManager.PERMISSION_GRANTED) {
-                        Toast.makeText(this, "you must grant the permission "+permissions[i], Toast.LENGTH_SHORT).show();
-						i++;
-                        stopService(new Intent(this,PortSipService.class));
+                        Toast.makeText(this, "you must grant the permission " + permissions[i], Toast.LENGTH_SHORT).show();
+                        i++;
+                        stopService(new Intent(this, PortSipService.class));
                         System.exit(0);
                     }
                 }
                 break;
         }
     }
+
     @Override
     public void onCheckedChanged(RadioGroup radioGroup, int checkedId) {
         switch (checkedId) {
@@ -125,19 +153,18 @@ public class MainActivity extends Activity implements RadioGroup.OnCheckedChange
 
         FragmentTransaction fTransaction = getFragmentManager().beginTransaction();
         fTransaction.hide(login_fragment).hide(numpad_fragment).hide(video_fragment).hide(setting_fragment).hide(message_fragment);
-        if(fragment!=null){
-            fTransaction.show( fragment).commit();
+        if (fragment != null) {
+            fTransaction.show(fragment).commit();
         }
     }
 
     public void requestPermissions(Activity activity) {
         // Check if we have write permission
-        if(	PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                ||PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
-                ||PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO))
-        {
-            ActivityCompat.requestPermissions(activity,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.CAMERA,Manifest.permission.RECORD_AUDIO},
+        if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                || PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
+                || PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO)) {
+            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO},
                     REQ_DANGERS_PERMISSION);
         }
     }

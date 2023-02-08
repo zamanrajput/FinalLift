@@ -4,6 +4,9 @@ import com.portsip.PortSipEnumDefine;
 import com.portsip.PortSipSdk;
 import com.portsip.R;
 import com.portsip.sipsample.adapter.AudioDeviceAdapter;
+import com.portsip.sipsample.modification.admin.PinAdminActivity;
+import com.portsip.sipsample.modification.src.SharedPreUtil;
+import com.portsip.sipsample.modification.src.models.AdminConfig;
 import com.portsip.sipsample.receiver.PortMessageReceiver;
 import com.portsip.sipsample.service.PortSipService;
 import com.portsip.sipsample.util.CallManager;
@@ -36,23 +39,23 @@ import android.view.ViewGroup;
 import androidx.core.app.ActivityCompat;
 
 public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSelectedListener, View.OnClickListener,
-        CompoundButton.OnCheckedChangeListener ,PortMessageReceiver.BroadcastListener{
+        CompoundButton.OnCheckedChangeListener, PortMessageReceiver.BroadcastListener {
     private EditText etSipNum;
-    private TextView mtips;
+    private static TextView mtips;
     private Spinner spline;
     CheckBox cbSendVideo, cbRecvVideo, cbConference, cbSendSdp;
-    MyApplication application;
-    MainActivity activity;
-        AudioDeviceAdapter audioDeviceAdapter;
+    private static MyApplication application;
+    MainSIPActivity activity;
+    AudioDeviceAdapter audioDeviceAdapter;
 
-        final PortSipEnumDefine.AudioDevice[] audioDevices = new PortSipEnumDefine.AudioDevice[]{PortSipEnumDefine.AudioDevice.EARPIECE
-                , PortSipEnumDefine.AudioDevice.SPEAKER_PHONE
-                , PortSipEnumDefine.AudioDevice.BLUETOOTH,
-                PortSipEnumDefine.AudioDevice.WIRED_HEADSET};
+    final PortSipEnumDefine.AudioDevice[] audioDevices = new PortSipEnumDefine.AudioDevice[]{PortSipEnumDefine.AudioDevice.EARPIECE
+            , PortSipEnumDefine.AudioDevice.SPEAKER_PHONE
+            , PortSipEnumDefine.AudioDevice.BLUETOOTH,
+            PortSipEnumDefine.AudioDevice.WIRED_HEADSET};
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        activity = (MainActivity) getActivity();
+        activity = (MainSIPActivity) getActivity();
         application = (MyApplication) activity.getApplicationContext();
         return inflater.inflate(R.layout.numpad, container, false);
     }
@@ -61,16 +64,16 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        etSipNum =  view.findViewById(R.id.etsipaddress);
-        cbSendSdp =  view.findViewById(R.id.sendSdp);
-        cbConference =  view.findViewById(R.id.conference);
-        cbSendVideo =  view.findViewById(R.id.sendVideo);
-        cbRecvVideo =  view.findViewById(R.id.acceptVideo);
+        etSipNum = view.findViewById(R.id.etsipaddress);
+        cbSendSdp = view.findViewById(R.id.sendSdp);
+        cbConference = view.findViewById(R.id.conference);
+        cbSendVideo = view.findViewById(R.id.sendVideo);
+        cbRecvVideo = view.findViewById(R.id.acceptVideo);
 
-        spline =  view.findViewById(R.id.sp_lines);
+        spline = view.findViewById(R.id.sp_lines);
 
-        TableLayout dtmfPad =  view.findViewById(R.id.dtmf_pad);
-        TableLayout functionPad =  view.findViewById(R.id.function_pad);
+        TableLayout dtmfPad = view.findViewById(R.id.dtmf_pad);
+        TableLayout functionPad = view.findViewById(R.id.function_pad);
 
 
         ArrayAdapter spinnerAdapter = ArrayAdapter.createFromResource(getActivity(), R.array.lines, android.R.layout.simple_list_item_1);
@@ -82,7 +85,7 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
         view.findViewById(R.id.dial).setOnClickListener(this);
         view.findViewById(R.id.pad).setOnClickListener(this);
         view.findViewById(R.id.delete).setOnClickListener(this);
-        mtips = (TextView) view.findViewById(R.id.txtips);
+        mtips = (TextView) view.findViewById(R.id.userStatusTextView);
 
         cbConference.setChecked(application.mConference);
         cbConference.setOnCheckedChangeListener(this);
@@ -94,15 +97,15 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
     public void onBroadcastReceiver(Intent intent) {
         String action = intent == null ? "" : intent.getAction();
         if (PortSipService.CALL_CHANGE_ACTION.equals(action)) {
-            	long sessionId = intent.getLongExtra(PortSipService.EXTRA_CALL_SEESIONID, Session.INVALID_SESSION_ID);
-            	String status = intent.getStringExtra(PortSipService.EXTRA_CALL_DESCRIPTION);
-            	showTips(status);
-            }else if(PortSipService.ACTION_SIP_AUDIODEVICE.equals(action)){
-                PortSipEnumDefine.AudioDevice device = CallManager.Instance().getCurrentAudioDevice();
-                audioDeviceAdapter.setSelectalbeAudioDevice(CallManager.Instance().getSelectalbeAudioDevice());
-                audioDeviceAdapter.notifyDataSetChanged();
-                ((Button)getView().findViewById(R.id.audio_device)).setText(device.toString());
-            }
+            long sessionId = intent.getLongExtra(PortSipService.EXTRA_CALL_SEESIONID, Session.INVALID_SESSION_ID);
+            String status = intent.getStringExtra(PortSipService.EXTRA_CALL_DESCRIPTION);
+            showTips(status);
+        } else if (PortSipService.ACTION_SIP_AUDIODEVICE.equals(action)) {
+            PortSipEnumDefine.AudioDevice device = CallManager.Instance().getCurrentAudioDevice();
+            audioDeviceAdapter.setSelectalbeAudioDevice(CallManager.Instance().getSelectalbeAudioDevice());
+            audioDeviceAdapter.notifyDataSetChanged();
+            ((Button) getView().findViewById(R.id.audio_device)).setText(device.toString());
+        }
     }
 
     @Override
@@ -151,9 +154,9 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
         }
     }
 
-    private void showTips(String text) {
+    private static void showTips(String text) {
         mtips.setText(text);
-        Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
+//        Toast.makeText(MainSIPActivity.mActivitySip, text, Toast.LENGTH_SHORT).show();
     }
 
     private void SwitchPanel() {
@@ -232,7 +235,7 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
             showTips("current line must be connected ");
             return;
         }
-        EditText transferTo =  TransferDLG.findViewById(R.id.ettransferto);
+        EditText transferTo = TransferDLG.findViewById(R.id.ettransferto);
         String referTo = transferTo.getText().toString();
         if (TextUtils.isEmpty(referTo)) {
             showTips("The transfer number is empty");
@@ -254,8 +257,8 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
             showTips("current line must be connected ");
             return;
         }
-        EditText transferTo =  AttendTransferDLG.findViewById(R.id.ettransferto);
-        EditText transferLine =  AttendTransferDLG.findViewById(R.id.ettransferline);
+        EditText transferTo = AttendTransferDLG.findViewById(R.id.ettransferto);
+        EditText transferLine = AttendTransferDLG.findViewById(R.id.ettransferline);
         String referTo = transferTo.getText().toString();
         if (TextUtils.isEmpty(referTo)) {
             showTips("The transfer number is empty");
@@ -346,37 +349,7 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
 
             case R.id.dial: {
 
-                String callTo = etSipNum.getText().toString();
-                if (callTo.length() <= 0) {
-                    showTips("The phone number is empty.");
-                    return;
-                }
-                if (!currentLine.IsIdle()) {
-                    showTips("Current line is busy now, please switch a line.");
-                    return;
-                }
-
-                // Ensure that we have been added one audio codec at least
-                if (portSipSdk.isAudioCodecEmpty()) {
-                    showTips("Audio Codec Empty,add audio codec at first");
-                    return;
-                }
-
-                // Usually for 3PCC need to make call without SDP
-                long sessionId = portSipSdk.call(callTo, cbSendSdp.isChecked(), cbSendVideo.isChecked());
-                if (sessionId <= 0) {
-                    showTips("Call failure");
-                    return;
-                }
-                //default send video
-                portSipSdk.sendVideo(sessionId, true);
-
-                currentLine.remote = callTo;
-
-                currentLine.sessionID = sessionId;
-                currentLine.state = Session.CALL_STATE_FLAG.TRYING;
-                currentLine.hasVideo = cbSendVideo.isChecked();
-                showTips(currentLine.lineName + ": Calling...");
+                makeCall();
             }
             break;
             case R.id.hangup: {
@@ -389,7 +362,6 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
                     case CONNECTED:
                     case TRYING:
                         portSipSdk.hangUp(currentLine.sessionID);
-
                         showTips(currentLine.lineName + ": Hang up");
                         break;
                 }
@@ -408,7 +380,7 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
                 currentLine.state = Session.CALL_STATE_FLAG.CONNECTED;
                 Ring.getInstance(getActivity()).stopRingTone();//stop ring
                 portSipSdk.answerCall(currentLine.sessionID, cbRecvVideo.isChecked());//answer call
-                if(application.mConference){
+                if (application.mConference) {
                     portSipSdk.joinToConference(currentLine.sessionID);
                 }
             }
@@ -474,8 +446,8 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
                 }
                 showTransferDialog();
             }
-                break;
-                case R.id.mute: {
+            break;
+            case R.id.mute: {
 
                 if (currentLine.bMute) {
                     portSipSdk.muteSession(currentLine.sessionID, false,
@@ -490,26 +462,91 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
                 }
             }
             break;
-                case R.id.audio_device: {
-                    if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S
-                            && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT)!= PackageManager.PERMISSION_GRANTED){
-                        Toast.makeText(getContext(),"BLUETOOTH_CONNECT permission is required for BLUETOOTH Device",Toast.LENGTH_SHORT).show();
-                        ActivityCompat.requestPermissions(getActivity(),new String[]{Manifest.permission.BLUETOOTH_CONNECT},100);
-                    }
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setCancelable(true);
-
-                    builder.setAdapter(audioDeviceAdapter, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    CallManager.Instance().setAudiodevice(portSipSdk,audioDevices[which]);
-                                }
-                            }).create().show();
+            case R.id.audio_device: {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                        && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getContext(), "BLUETOOTH_CONNECT permission is required for BLUETOOTH Device", Toast.LENGTH_SHORT).show();
+                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 100);
                 }
-                break;
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setCancelable(true);
+
+                builder.setAdapter(audioDeviceAdapter, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        CallManager.Instance().setAudiodevice(portSipSdk, audioDevices[which]);
+                    }
+                }).create().show();
             }
+            break;
         }
+    }
+
+    public static void hangUp() {
+        if (application.mEngine == null)
+            return;
+        PortSipSdk portSipSdk = application.mEngine;
+        Session currentLine = CallManager.Instance().getCurrentSession();
+
+
+        Ring.getInstance(MainSIPActivity.mActivitySip).stop();
+        switch (currentLine.state) {
+            case INCOMING:
+                portSipSdk.rejectCall(currentLine.sessionID, 486);
+                showTips(currentLine.lineName + ": Rejected call");
+                break;
+            case CONNECTED:
+            case TRYING:
+                portSipSdk.hangUp(currentLine.sessionID);
+                showTips(currentLine.lineName + ": Hang up");
+                break;
+        }
+        currentLine.Reset();
+    }
+
+    public static void makeCall() {
+        if (application.mEngine == null)
+            return;
+        PortSipSdk portSipSdk = application.mEngine;
+        Session currentLine = CallManager.Instance().getCurrentSession();
+        String callTo = new SharedPreUtil(MainSIPActivity.mActivitySip).getConfig().helpLine;
+        if (callTo.equals("")) {
+            PinAdminActivity.start(MainSIPActivity.mActivitySip);
+        }
+        if (callTo.length() <= 0) {
+            showTips("The phone number is empty.");
+            return;
+        }
+        if (!currentLine.IsIdle()) {
+            showTips("Current line is busy now, please switch a line.");
+            return;
+        }
+
+        // Ensure that we have been added one audio codec at least
+        if (portSipSdk.isAudioCodecEmpty()) {
+            showTips("Audio Codec Empty,add audio codec at first");
+            return;
+        }
+
+
+        // Usually for 3PCC need to make call without SDP
+//        long sessionId = portSipSdk.call(callTo, cbSendSdp.isChecked(), cbSendVideo.isChecked());
+        long sessionId = portSipSdk.call(callTo, true, true);
+
+        if (sessionId <= 0) {
+            showTips("Call failure");
+            return;
+        }
+        //default send video
+        portSipSdk.sendVideo(sessionId, true);
+
+        currentLine.remote = callTo;
+
+        currentLine.sessionID = sessionId;
+        currentLine.state = Session.CALL_STATE_FLAG.TRYING;
+        currentLine.hasVideo = true;
+    }
 
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int position, long l) {
@@ -552,15 +589,15 @@ public class NumpadFragment extends BaseFragment implements AdapterView.OnItemSe
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-        switch (compoundButton.getId()){
+        switch (compoundButton.getId()) {
             case R.id.conference:
-                if(application.mConference == b)
+                if (application.mConference == b)
                     return;
                 application.mConference = b;
-                if(b){
-                    application.mEngine.createVideoConference(null,320,240,true);
+                if (b) {
+                    application.mEngine.createVideoConference(null, 320, 240, true);
                     CallManager.Instance().addActiveSessionToConfrence(application.mEngine);
-                }else {
+                } else {
                     application.mEngine.destroyConference();
                 }
                 break;

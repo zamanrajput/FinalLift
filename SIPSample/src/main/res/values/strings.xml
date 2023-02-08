@@ -202,5 +202,8 @@ without your confirmation.</string>
 
     <string name="str_prack">PRACK</string>
     <string name="str_pracktitle">Enable PRACK</string>
+    <string name="emergency_communication_system">Emergency Communication System</string>
+    <string name="english">English</string>
+
 
 </resources>

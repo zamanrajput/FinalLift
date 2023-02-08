@@ -1,16 +1,19 @@
 package com.portsip.sipsample.ui;
 
 import com.portsip.R;
+import com.portsip.sipsample.modification.src.HomeActivity;
 import com.portsip.sipsample.receiver.PortMessageReceiver;
 import com.portsip.sipsample.service.PortSipService;
 import com.portsip.sipsample.util.CallManager;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+
 import androidx.annotation.Nullable;
+
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,9 +26,9 @@ import android.widget.TextView;
 
 import static com.portsip.sipsample.service.PortSipService.EXTRA_REGISTER_STATE;
 
-public class LoginFragment extends BaseFragment implements AdapterView.OnItemSelectedListener, View.OnClickListener,PortMessageReceiver.BroadcastListener{
+public class LoginFragment extends BaseFragment implements AdapterView.OnItemSelectedListener, View.OnClickListener, PortMessageReceiver.BroadcastListener {
     MyApplication application;
-    MainActivity activity;
+    MainSIPActivity activity;
     private EditText etUsername = null;
     private EditText etPassword = null;
     private EditText etSipServer = null;
@@ -41,21 +44,22 @@ public class LoginFragment extends BaseFragment implements AdapterView.OnItemSel
     private Spinner spSRTP;
     private TextView mtxStatus;
     private SharedPreferences mPreferences;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        activity = (MainActivity) getActivity();
+        activity = (MainSIPActivity) getActivity();
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         application = (MyApplication) activity.getApplicationContext();
-        View view = inflater.inflate(R.layout.login, container, false);
-        return view;
+        mCtx = this;
+        return inflater.inflate(R.layout.login, container, false);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mtxStatus = (TextView) view.findViewById(R.id.txtips);
+        mtxStatus = (TextView) view.findViewById(R.id.userStatusTextView);
 
         etUsername = (EditText) view.findViewById(R.id.etusername);
         etPassword = (EditText) view.findViewById(R.id.etpwd);
@@ -88,7 +92,7 @@ public class LoginFragment extends BaseFragment implements AdapterView.OnItemSel
     @Override
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
-        if (!hidden){
+        if (!hidden) {
             activity.receiver.broadcastReceiver = this;
             setOnlineStatus(null);
         }
@@ -97,7 +101,7 @@ public class LoginFragment extends BaseFragment implements AdapterView.OnItemSel
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        activity.receiver.broadcastReceiver =null;
+        activity.receiver.broadcastReceiver = null;
     }
 
 
@@ -138,7 +142,7 @@ public class LoginFragment extends BaseFragment implements AdapterView.OnItemSel
     public void onBroadcastReceiver(Intent intent) {
         String action = intent == null ? "" : intent.getAction();
         if (PortSipService.REGISTER_CHANGE_ACTION.equals(action)) {
-            String tips  =intent.getStringExtra(EXTRA_REGISTER_STATE);
+            String tips = intent.getStringExtra(EXTRA_REGISTER_STATE);
             setOnlineStatus(tips);
         } else if (PortSipService.CALL_CHANGE_ACTION.equals(action)) {
             //long sessionId = intent.GetLongExtra(PortSipService.EXTRA_CALL_SEESIONID, Session.INVALID_SESSION_ID);
@@ -148,9 +152,26 @@ public class LoginFragment extends BaseFragment implements AdapterView.OnItemSel
 
     private void setOnlineStatus(String tips) {
         if (CallManager.Instance().regist) {
-            mtxStatus.setText(TextUtils.isEmpty(tips)?getString(R.string.online):tips);
+            try {
+                mtxStatus.setText(TextUtils.isEmpty(tips) ? getString(R.string.online) : tips);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (HomeActivity.binding != null) {
+                HomeActivity.binding.status.setImageResource(R.drawable.online_dot);
+            }
         } else {
-            mtxStatus.setText(TextUtils.isEmpty(tips)?getString(R.string.offline):tips);
+            try {
+                mtxStatus.setText(TextUtils.isEmpty(tips) ? getString(R.string.offline) : tips);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mtxStatus.setText(TextUtils.isEmpty(tips) ? getString(R.string.offline) : tips);
+            if (HomeActivity.binding != null) {
+                HomeActivity.binding.status.setImageResource(R.drawable.red_dot);
+            }
         }
     }
 
@@ -159,18 +180,43 @@ public class LoginFragment extends BaseFragment implements AdapterView.OnItemSel
         switch (view.getId()) {
             case R.id.btonline:
                 SaveUserInfo();
-                Intent onLineIntent = new Intent(getActivity(), PortSipService.class);
-                onLineIntent.setAction(PortSipService.ACTION_SIP_REGIEST);
-                PortSipService.startServiceCompatibility(getActivity(),onLineIntent);
-                mtxStatus.setText("RegisterServer..");
+                switchOnline();
                 break;
             case R.id.btoffline:
-                Intent offLineIntent = new Intent(getActivity(), PortSipService.class);
-                offLineIntent.setAction(PortSipService.ACTION_SIP_UNREGIEST);
-                PortSipService.startServiceCompatibility(getActivity(),offLineIntent);
-                mtxStatus.setText("unRegisterServer");
+                switchOffline();
                 break;
         }
+    }
+
+
+    private static LoginFragment mCtx;
+
+    public static void switchOnline() {
+        Intent onLineIntent = new Intent(MainSIPActivity.mActivitySip, PortSipService.class);
+        onLineIntent.setAction(PortSipService.ACTION_SIP_REGIEST);
+        PortSipService.startServiceCompatibility(MainSIPActivity.mActivitySip, onLineIntent);
+
+        try {
+            mCtx.mtxStatus.setText("RegisterServer..");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public static void switchOffline() {
+        Intent offLineIntent = new Intent(mCtx.getActivity(), PortSipService.class);
+        offLineIntent.setAction(PortSipService.ACTION_SIP_UNREGIEST);
+        PortSipService.startServiceCompatibility(mCtx.getActivity(), offLineIntent);
+        try {
+            mCtx.mtxStatus.setText("Unregister Server..");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -183,11 +229,11 @@ public class LoginFragment extends BaseFragment implements AdapterView.OnItemSel
                 editor.putInt(PortSipService.SRTP, position).commit();
                 break;
             case R.id.spTransport:
-                if(mPreferences.getInt(PortSipService.TRANS, 0)!=position) {
+                if (mPreferences.getInt(PortSipService.TRANS, 0) != position) {
                     editor.putInt(PortSipService.TRANS, position).commit();
                     Intent setTransIntent = new Intent(getActivity(), PortSipService.class);
                     setTransIntent.setAction(PortSipService.ACTION_SIP_REINIT);
-                    PortSipService.startServiceCompatibility(getActivity(),setTransIntent);
+                    PortSipService.startServiceCompatibility(getActivity(), setTransIntent);
                 }
                 break;
         }

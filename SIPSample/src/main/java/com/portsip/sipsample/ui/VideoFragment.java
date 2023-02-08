@@ -1,6 +1,5 @@
 package com.portsip.sipsample.ui;
 
-import com.portsip.PortSipEnumDefine;
 import com.portsip.PortSipErrorcode;
 import com.portsip.PortSipSdk;
 import com.portsip.R;
@@ -22,7 +21,7 @@ import com.portsip.sipsample.util.Session;
 
 public class VideoFragment extends BaseFragment implements View.OnClickListener ,PortMessageReceiver.BroadcastListener{
 	MyApplication application;
-	MainActivity activity;
+	MainSIPActivity activity;
 
 	private PortSIPVideoRenderer remoteRenderScreen = null;
 	private PortSIPVideoRenderer localRenderScreen = null;
@@ -35,7 +34,7 @@ public class VideoFragment extends BaseFragment implements View.OnClickListener 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        activity = (MainActivity)getActivity();
+        activity = (MainSIPActivity)getActivity();
         application = (MyApplication)activity.getApplication();
 
         return inflater.inflate(R.layout.video, container, false);

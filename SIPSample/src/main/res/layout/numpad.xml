@@ -19,7 +19,7 @@
             android:text="@string/str_status"
             android:textColor="@color/black" />
         <TextView
-            android:id="@+id/txtips"
+            android:id="@+id/userStatusTextView"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="@string/str_tips"

@@ -1,8 +1,6 @@
 package com.portsip.sipsample.ui;
 
 import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -101,7 +99,7 @@ public class IncomingActivity extends Activity implements PortMessageReceiver.Br
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(receiver);
-        startActivity(new Intent(this,MainActivity.class));
+        startActivity(new Intent(this, MainSIPActivity.class));
     }
 
     @Override
